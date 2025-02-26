@@ -1,21 +1,49 @@
 -- 1. 
 -- a. Which prescriber had the highest total number of claims (totaled over all drugs)? Report the npi and the total number of claims.
 
-SELECT npi, MAX(total_claim_count) AS highest_total
-FROM prescription;
+SELECT npi, SUM(total_claim_count) AS highest_total
+FROM prescription
+WHERE npi IN 
+	(SELECT nppes_provider_first_name
+	FROM prescriber)
+GROUP BY npi
+ORDER BY highest_total DESC;
 	
    -- b. Repeat the above, but this time report the nppes_provider_first_name, nppes_provider_last_org_name,  specialty_description, and the total number of claims.
 
-
+SELECT nppes_provider_first_name, nppes_provider_last_org_name, specialty_description, npi, SUM(total_claim_count) AS max_claim_count
+FROM prescriber
+LEFT JOIN prescription
+USING(npi)
+WHERE total_claim_count IS NOT NULL  
+GROUP BY nppes_provider_first_name, nppes_provider_last_org_name, specialty_description, npi
+ORDER BY max_claim_count DESC
 
 -- 2. 
     -- a. Which specialty had the most total number of claims (totaled over all drugs)?
 
-
+SELECT specialty_description, SUM(total_claim_count) AS max_claim_count
+FROM prescriber
+LEFT JOIN prescription
+USING(npi)
+WHERE total_claim_count IS NOT NULL  
+GROUP BY specialty_description
+ORDER BY max_claim_count DESC
 
     -- b. Which specialty had the most total number of claims for opioids?
 
-
+SELECT specialty_description, SUM(total_claim_count) AS max_claim_count
+FROM prescriber
+LEFT JOIN prescription
+USING(npi)
+WHERE total_claim_count IS NOT NULL
+	AND drug_name IN (
+SELECT drug_name
+FROM drug
+WHERE opioid_drug_flag = 'Y'
+	)
+GROUP BY specialty_description
+ORDER BY max_claim_count DESC
 
     -- c. **Challenge Question:** Are there any specialties that appear in the prescriber table that have no associated prescriptions in the prescription table?
 
